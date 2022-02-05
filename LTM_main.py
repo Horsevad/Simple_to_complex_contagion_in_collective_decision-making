@@ -18,7 +18,7 @@ from network_functions import get_ave_shortest_path
 old_graph_list = []
 #Parameters for networks
 network_type = 'ws'
-nodes=[100]
+nodes=[10000]
 average_degree=[16]
 ## Thresholds are chosen such that they approximately give the thresholds of [1,...,8]
 thresholds = np.linspace(0.01,0.5,16)
