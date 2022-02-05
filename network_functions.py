@@ -1,11 +1,12 @@
-import graph_tool.all as gt
-import graph_tool.spectral
-import graph_tool.generation
 import numpy as np
 import networkx as nx
 import scipy as sp
 from pathlib import Path
 from scipy import sparse
+import graph_tool as gt
+import graph_tool.clustering
+import graph_tool.spectral
+import graph_tool.topology
 
 ## Remove these later
 
@@ -105,7 +106,7 @@ def get_laplacian_eigenvalues(G):
     """
 
     if not G.vertex_properties.get('eig_laplacian',False):
-        eig_lap = np.linalg.eigvalsh(gt.laplacian(G,norm=False).todense())
+        eig_lap = np.linalg.eigvalsh(gt.spectral.laplacian(G,norm=False).todense())
         G.vp['eig_laplacian'] =  G.new_vertex_property('double',vals=eig_lap)
     return G
 
@@ -120,16 +121,16 @@ def get_recursive_graph_paths(root):
 
 def get_local_clutsering(G):
     if not G.vertex_properties.get('local_clustering',False):
-        G.vertex_properties['local_clustering'] =  gt.local_clustering(G)
+        G.vertex_properties['local_clustering'] = graph_tool.clustering.local_clustering(G)
     return G
 
 def get_transitivity(G):
     if not G.gp.get('transitivity',False):
-        trans = G.new_graph_property('double',val=gt.global_clustering(G)[0])
+        trans = G.new_graph_property('double',val=graph_tool.clustering.global_clustering(G)[0])
         G.graph_properties['transitivity'] =  trans
     return G
 
 def get_ave_shortest_path(G):
     if not G.gp.get('shortest_path',False):
-        G.gp['shortest_path'] =  G.new_graph_property('double',val=np.sum(gt.shortest_distance(G).get_2d_array(range(G.num_vertices())))/(G.num_vertices()*(G.num_vertices()-1)))
+        G.gp['shortest_path'] =  G.new_graph_property('double',val=np.sum( graph_tool.topology.shortest_distance(G).get_2d_array(range(G.num_vertices())))/(G.num_vertices()*(G.num_vertices()-1)))
     return G
