@@ -9,3 +9,7 @@ python3 Figure1.py
 Which will generate Figure 1 from both the main paper and the supplementary materile
 
 [[file:figures/fig1/fig1_0.3.pdf][Figure 1 from the paper]]
+
+The data is included in network_props.csv and polarization.csv. The full network data takes up a large amount of space, but a sample is provided in the networks folder, and it is possible to generate more networks using the LTM_main.py script.
+
+The networks are saved as graph-tool binary files. Upon special request other formats can be provided.
