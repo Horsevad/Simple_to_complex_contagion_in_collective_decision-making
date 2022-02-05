@@ -127,3 +127,4 @@ for network in network_class:
         axs[0].grid(False)
         axs[1].grid(False)
         fig.show()
+        fig.savefig(f'figures/fig1/fig1_{cas}.pdf')
