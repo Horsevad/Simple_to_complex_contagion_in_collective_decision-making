@@ -31,7 +31,7 @@ unique_network_seeds = 1
 ## We use from 10**-3 to 1 to get the full range of the Watts-Strogatz networks
 probabilities = np.append([0], np.logspace(-3,-0,10))
 ## Root directory for storing networks
-network_root = '/home/horsevad/projects/networks/'
+network_root = 'networks/'
 
 ## Make a dict with the probabilities as keys, to count the available networks
 realization_counter=dict.fromkeys(probabilities,0)
@@ -41,7 +41,7 @@ cascades = np.round(np.linspace(0.1,0.9,9),1)
 for N in nodes:
     for k in average_degree:
         #Seed path for saving networks, put the
-        network_path = f"{network_root}{N}/{k}/{network_type}"
+        network_path = f"{network_root}{N}/{k}"
         ## If the network_path does not exist it is created
         if not os.path.exists(network_path):
             os.makedirs(network_path)
@@ -50,8 +50,6 @@ for N in nodes:
         for graph_path in get_recursive_graph_paths(network_path):
             g_old = gt.load_graph(str(graph_path))
             realization_counter[g_old.gp.probability] += 1
-            if realization_counter[g_old.gp.probability] < 5:
-                g_old.save(f'networks/{g_old.gp.ID}.gt')
         #### Create missing networks ####
         for p in realization_counter:
             ## Because only one network exists in the Watts-Strogatz
