@@ -1,16 +1,14 @@
-import graph_tool.all as gt
+import graph_tool as gt
 import glob
 import pandas as pd
 import os
 import numpy as np
 from scipy import linalg
 # Script for calculating gains on networks, also able to append the list of frequencies the gain is found at
-networks = ['smallworld','mhk']
+networks = ['mhk','smallworld']
 nodes = [240]
-
-degrees = [16]
-#d = {'ID':[],'freq':[],'p':[]}
-#Special for PRL fig1
+## Degrees for networks to be analyzed
+degrees = np.arange(4,32,2)
 d = {'ID':[],'freq':[],'p':[],'CC':[]}
 
 w = np.logspace(-4,1,21)
@@ -68,7 +66,6 @@ for network in networks:
                 change = False
                 G = gt.load_graph(graph)
                 # The following line is to update the gain of the network
-                # if not G.vertex_properties.get('gains12',False):
                 if not G.vertex_properties.get('gains',False):
                     frequencies = G.new_graph_property('vector<double>',val=w)
                     G.graph_properties['frequencies'] = frequencies
