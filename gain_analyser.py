@@ -1,0 +1,106 @@
+import graph_tool.all as gt
+import glob
+import pandas as pd
+import os
+import numpy as np
+from scipy import linalg
+# Script for calculating gains on networks
+networks = ['smallworld','mhk']
+nodes = [240]
+
+degrees = [16]
+#d = {'ID':[],'freq':[],'p':[]}
+#Special for PRL fig1
+d = {'ID':[],'freq':[],'p':[],'CC':[]}
+
+w = np.logspace(-4,1,21)
+increase = False
+## Crazy setup for k == 16
+increase_w = np.logspace( np.log10(w[8]),np.log10(w[10]),10)[1:-1]
+w = np.append(w,increase_w)
+increase_w = np.logspace( np.log10(w[23]),np.log10(w[24]),4)[1:-1]
+w = np.append(w,increase_w)
+increase_w = np.logspace( np.log10(w[23]),np.log10(w[29]),10)[1:-1]
+
+def get_gain(graph,w,N):
+    L = gt.laplacian(graph,normalized=False) #the build in normalized gives the symetric normalized laplacian, but we want the random walk normalized laplacian
+    
+    L = (L/L.diagonal()).T  ## Random walk normalization  D^-1 L = LD^-1 because L is symetric
+
+    h2 = G.new_vertex_property('vector<double>')
+    for g in G.vertices():
+        ida = np.arange(N) != g
+        idb = np.arange(N) == g
+        A = L[np.ix_(ida,ida)].astype(complex)
+        B = L[np.ix_(ida,idb)]
+
+        H2 = []    
+        for f in w:
+            np.fill_diagonal(A,1.0+1j*f)
+            #A.setdiag(f*1j-1)
+            h = linalg.solve(A,-B)
+            
+            H2.append(linalg.norm(h)**2)
+
+        h2[g] = H2
+
+    return h2
+
+for network in networks:
+    for node in nodes:
+        for k in degrees:
+            print(k)
+            database_change = False
+            savepath = f'networks/{node}/{k}/{network}/'
+            graphs = glob.glob(f'{savepath}*')
+            data_file =  f'networks/{node}/{k}/network_gains.csv'
+            file_exist = False
+            if file_exist:
+                network_gains = pd.read_csv(data_file,sep='\t')
+                network_gains.set_index(['ID','freq','p','CC'],inplace=True)
+                IDs = network_gains.index.values
+            else:
+                network_gains = pd.DataFrame(data=d)
+                network_gains.set_index(['ID','freq','p','CC'],inplace=True)
+
+            for graph in graphs:
+                print(graph)
+                change = False
+                G = gt.load_graph(graph)
+                # The following line is to update the gain of the network
+                # if not G.vertex_properties.get('gains12',False):
+                if not G.vertex_properties.get('gains',False):
+                    frequencies = G.new_graph_property('vector<double>',val=w)
+                    G.graph_properties['frequencies'] = frequencies
+
+                    G.vertex_properties['gains'] = get_gain(G,np.append(w,increase_w),node)
+
+                if increase:
+                    if True:
+                        if len(G.gp.frequencies) < len(np.append(w,increase_w)):
+                            gains = G.vp['gains'].get_2d_array(range(len(w)))
+                            frequencies = G.new_graph_property('vector<double>',val=np.append(w,increase_w))
+                            G.graph_properties['frequencies'] = frequencies
+
+                            new_gains = np.append(gains,get_gain(G,increase_w,node).get_2d_array(range(len(increase_w))),axis=0)
+                            G.vp.gains = G.new_vertex_property('vector<double>',vals=new_gains.T)
+                            # G.save(graph)
+
+                    
+
+                if False:
+                
+                    # if G.graph_properties['ID'] not in network_gains.index.get_level_values(0).unique():
+                
+                    my_data = pd.DataFrame(data=d)
+                    # my_data.set_index(['ID','freq','p'],inplace=True)
+                    ## SPecial for PRL fig 1
+                    my_data.set_index(['ID','freq','p','CC'],inplace=True)
+                    for f,g in zip(w,np.mean(G.vertex_properties['gains'].get_2d_array(range(len(G.graph_properties['frequencies']))),1)):
+                        my_data.loc[(G.graph_properties['ID'],f,G.gp['probability'],sum((G.vp.local_clustering.get_array()))/len(G.get_vertices())),'H2'] = g
+                        database_change = True
+                    
+                    network_gains = network_gains.append(my_data)
+
+            # if database_change:
+            #     network_gains.to_csv(data_file,sep='\t',mode='w',header=True)
