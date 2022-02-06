@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import numpy as np
 from scipy import linalg
-# Script for calculating gains on networks
+# Script for calculating gains on networks, also able to append the list of frequencies the gain is found at
 networks = ['smallworld','mhk']
 nodes = [240]
 
@@ -15,7 +15,7 @@ d = {'ID':[],'freq':[],'p':[],'CC':[]}
 
 w = np.logspace(-4,1,21)
 increase = False
-## Crazy setup for k == 16
+## Lists of frequencies used
 increase_w = np.logspace( np.log10(w[8]),np.log10(w[10]),10)[1:-1]
 w = np.append(w,increase_w)
 increase_w = np.logspace( np.log10(w[23]),np.log10(w[24]),4)[1:-1]
@@ -85,22 +85,3 @@ for network in networks:
                             new_gains = np.append(gains,get_gain(G,increase_w,node).get_2d_array(range(len(increase_w))),axis=0)
                             G.vp.gains = G.new_vertex_property('vector<double>',vals=new_gains.T)
                             # G.save(graph)
-
-                    
-
-                if False:
-                
-                    # if G.graph_properties['ID'] not in network_gains.index.get_level_values(0).unique():
-                
-                    my_data = pd.DataFrame(data=d)
-                    # my_data.set_index(['ID','freq','p'],inplace=True)
-                    ## SPecial for PRL fig 1
-                    my_data.set_index(['ID','freq','p','CC'],inplace=True)
-                    for f,g in zip(w,np.mean(G.vertex_properties['gains'].get_2d_array(range(len(G.graph_properties['frequencies']))),1)):
-                        my_data.loc[(G.graph_properties['ID'],f,G.gp['probability'],sum((G.vp.local_clustering.get_array()))/len(G.get_vertices())),'H2'] = g
-                        database_change = True
-                    
-                    network_gains = network_gains.append(my_data)
-
-            # if database_change:
-            #     network_gains.to_csv(data_file,sep='\t',mode='w',header=True)
